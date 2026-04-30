@@ -10,10 +10,10 @@ import (
 func main() {
 	// 1. Initialize Connection
 	conn := slsdk.NewConnection(slsdk.Config{
-		BaseURL:  "https://sb1hana05.setechco.net:50160/b1s/v2",
-		Company:  "EPRACTEST",
-		UserName: "erodriguez",
-		Password: "Eprac2026!",
+		BaseURL:  "https://localhost:50000/b1s/v2",
+		Company:  "SBODEMO",
+		UserName: "manager",
+		Password: "1234",
 	})
 
 	// 2. Perform Login
