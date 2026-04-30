@@ -26,10 +26,37 @@ func main() {
 	// 3. Create a Business Partner Object
 	bp := slsdk.NewBusinessPartner(conn)
 
-	// Configure the fields
-	bp.CardCode("c001").
-		CardName("c001").
-		CardType("C") // C = Customer
+	// Configure the explicit fields
+	bp.CardCode("c002").
+		CardName("c002").
+		CardType("C").
+		FederalTaxID("XAXX010101000").
+		Currency("USD").
+		GroupCode(100).
+		Phone1("555-1234").
+		EmailAddress("contacto@c002.com")
+
+	// You can still use Set() for completely custom/unmapped fields
+	bp.Set("U_MyCustomField", "Hello World")
+
+	// Add an Address (BPAddresses)
+	bp.AddAddress().
+		AddressName("Main Office").
+		Street("123 Tech Avenue").
+		City("San Francisco").
+		ZipCode("94105").
+		Country("US").
+		State("CA").
+		AddressType("bo_BillTo").
+		Add()
+
+	// Add a Contact Employee (ContactEmployees)
+	bp.AddContact().
+		Name("John Doe").
+		E_Mail("john@c002.com").
+		Phone1("555-5555").
+		Position("CTO").
+		Add()
 
 	// 4. Execute the Addition
 	fmt.Println("Adding Business Partner...")
