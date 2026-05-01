@@ -13,7 +13,7 @@ This SDK allows developers to interact with the Service Layer using native Go st
 ## Installation
 
 ```bash
-go get github.com/ehitelrc/slsdk@v0.1.1GOPROXY=direct go get github.com/ehitelrc/slsdk@v0.1.1
+go get github.com/ehitelrc/slsdk@v0.1.0
 ```
 
 ## Usage Example
