@@ -46,3 +46,11 @@ func NewPurchaseOrder(conn *Connection) *objects.PurchaseOrder {
 	return objects.NewPurchaseOrder(conn)
 }
 
+// Map is a convenient alias for map[string]any to use in generic payloads.
+type Map = objects.Map
+
+// NewGenericObject initializes a dynamic object for an unmapped endpoint.
+func NewGenericObject(conn *Connection, endpoint string) *objects.GenericObject {
+	return objects.NewGenericObject(conn, endpoint)
+}
+

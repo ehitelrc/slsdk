@@ -78,6 +78,37 @@ func main() {
 }
 ```
 
+## Generic Objects (Unmapped Endpoints)
+
+If you need to interact with a Service Layer endpoint that hasn't been explicitly mapped in the SDK yet, you can use `GenericObject` and `slsdk.Map`.
+
+```go
+// Initialize a generic object targeting any endpoint, e.g., "StockTransfers"
+gen := slsdk.NewGenericObject(conn, "StockTransfers")
+
+// Set header fields
+gen.Set("DocDate", "2024-06-26").
+    Set("FromWarehouse", "004").
+    Set("ToWarehouse", "004")
+
+// Append complex nested lines easily using slsdk.Map
+gen.Append("StockTransferLines", slsdk.Map{
+    "ItemCode":      "IMP TK 8100",
+    "Quantity":      1,
+    "WarehouseCode": "004",
+    "StockTransferLinesBinAllocations": []slsdk.Map{
+        {
+            "BinAbsEntry":   12,
+            "Quantity":      1,
+            "BinActionType": 2,
+        },
+    },
+})
+
+// Execute the POST request
+resp, err := gen.Add()
+```
+
 ## Roadmap
 
 - **v0.1.0** → Connection Engine + StockTransfer Object (Current)
