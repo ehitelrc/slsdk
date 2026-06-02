@@ -4,11 +4,15 @@ SLSDK is a clean, extensible, and independent Go module for interacting with the
 
 This SDK allows developers to interact with the Service Layer using native Go structures and fluent APIs, avoiding the complexity of manual JSON construction, session handling, and raw HTTP operations.
 
-## Features
-- **Connection Manager**: Automatic session tracking via cookies, auto-relogin support.
-- **Fluent API**: Build complex business objects like `StockTransfer` through simple, chainable methods.
-- **Query Engine**: Native OData query builder for selecting, filtering, ordering, and paginating.
-- **Unified Response & Error Model**: Standardized response handling and typed `SAPError` structures.
+## Features & Benefits (Why SLSDK vs Raw Service Layer?)
+
+Interacting directly with the SAP B1 Service Layer via raw HTTP calls can be tedious and error-prone. **SLSDK** acts as a robust middleware that solves common pain points:
+
+- **No Manual Session Management**: Service Layer requires handling `B1SESSION` and `ROUTEID` cookies, managing timeouts, and triggering re-logins. SLSDK's **Connection Manager** tracks this automatically.
+- **Fluent API & Type Safety**: Building complex, deeply nested JSON trees manually (for lines, bin allocations, batch numbers) often leads to syntax errors or invalid payloads. SLSDK provides clean, chainable Go methods (e.g., `.ItemCode("A0001").Quantity(10)`).
+- **Pagination Handled Natively**: Instead of manually parsing OData's `odata.nextLink` to fetch thousands of records, SLSDK's query engine includes `.GetAll()` to automatically paginate and merge results.
+- **Standardized Error Handling**: Transforms obscure, dynamic JSON error structures from SAP into typed, predictable Go `SAPError` models.
+- **Native Go Integration**: Reduces boilerplate. You focus on the business logic, while SLSDK handles the HTTP and OData complexities.
 
 ## Installation
 
@@ -75,6 +79,50 @@ func main() {
 		log.Fatalf("Query Failed: %v", err)
 	}
 	fmt.Printf("Items Result: %+v\n", items.Data)
+}
+```
+## Supported Core Objects & Examples
+
+SLSDK provides fully typed native builders for multiple SAP entities. This prevents typos in property names and ensures data types are correct before the payload leaves your server.
+
+### 1. Delivery Note (Entrega)
+```go
+delivery := slsdk.NewDeliveryNote(conn)
+delivery.Header().
+	CardCode("C20000").
+	DocDate("2024-06-26").
+	Comments("Delivery generated via SLSDK")
+
+delivery.AddLine().
+	ItemCode("A0001").
+	Quantity(5).
+	WarehouseCode("01").
+	Add()
+
+resp, err := delivery.Add()
+if err != nil {
+	log.Fatalf("Error adding delivery note: %v", err)
+}
+```
+
+### 2. Purchase Delivery (Entrada de Mercancía / Recepción)
+```go
+pdpo := slsdk.NewPurchaseDelivery(conn)
+pdpo.Header().
+	CardCode("V10000").
+	DocDate("2024-06-26").
+	Comments("Purchase Delivery via SLSDK")
+
+pdpo.AddLine().
+	ItemCode("A0001").
+	Quantity(20).
+	UnitPrice(15.50).
+	WarehouseCode("01").
+	Add()
+
+resp, err := pdpo.Add()
+if err != nil {
+	log.Fatalf("Error adding purchase delivery: %v", err)
 }
 ```
 
@@ -160,9 +208,9 @@ resp, err := gen.Add()
 
 ## Roadmap
 
-- **v0.1.0** → Connection Engine + StockTransfer Object (Current)
-- **v0.2.0** → Query builder enhancements (expanded OData support)
-- **v0.3.0** → More SAP objects (Purchase Orders, Delivery Notes, Inventory)
+- **v0.1.x** → Connection Engine, Generic Objects, Query Builder, and multiple core SAP objects (StockTransfer, Orders, Invoices, DeliveryNotes, PurchaseDeliveries, BusinessPartners, Items) (Current)
+- **v0.2.0** → Advanced Query builder enhancements (expanded OData support, aggregations)
+- **v0.3.0** → Extended SAP objects (Payments, Journal Entries, Inventory validations)
 - **v1.0.0** → Stable SDK release
 
 ## Versioning
