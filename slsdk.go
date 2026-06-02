@@ -46,11 +46,36 @@ func NewPurchaseOrder(conn *Connection) *objects.PurchaseOrder {
 	return objects.NewPurchaseOrder(conn)
 }
 
+// NewPurchaseDelivery initializes a new Purchase Delivery Note (Goods Receipt PO).
+func NewPurchaseDelivery(conn *Connection) *objects.PurchaseDelivery {
+	return objects.NewPurchaseDelivery(conn)
+}
+
+// NewDeliveryNote initializes a new Delivery Note (AR Delivery).
+func NewDeliveryNote(conn *Connection) *objects.DeliveryNote {
+	return objects.NewDeliveryNote(conn)
+}
+
 // Map is a convenient alias for map[string]any to use in generic payloads.
 type Map = objects.Map
 
 // NewGenericObject initializes a dynamic object for an unmapped endpoint.
 func NewGenericObject(conn *Connection, endpoint string) *objects.GenericObject {
 	return objects.NewGenericObject(conn, endpoint)
+}
+
+// NewQuery initializes a generic OData query builder for the specified endpoint.
+func NewQuery(conn *Connection, endpoint string) *objects.QueryBuilder {
+	return objects.NewQuery(conn, endpoint)
+}
+
+// NewSQLView initializes an object to interact with an exposed MSSQL View.
+func NewSQLView(conn *Connection, viewName string) *objects.SQLView {
+	return objects.NewSQLView(conn, viewName)
+}
+
+// NewCrossJoin initializes a cross join query targeting QueryService_PostQuery.
+func NewCrossJoin(conn *Connection, tables ...string) *objects.CrossJoinBuilder {
+	return objects.NewCrossJoin(conn, tables...)
 }
 

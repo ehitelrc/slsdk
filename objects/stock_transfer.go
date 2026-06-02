@@ -23,12 +23,24 @@ type StockTransferHeader struct {
 	Comments      string `json:"Comments,omitempty"`
 }
 
+type stBatch struct {
+	BatchNumber string  `json:"BatchNumber"`
+	Quantity    float64 `json:"Quantity"`
+}
+
+type stSerial struct {
+	InternalSerialNumber string  `json:"InternalSerialNumber"`
+	Quantity             float64 `json:"Quantity"`
+}
+
 // StockTransferLine contains the line-level fields for a Stock Transfer.
 type StockTransferLine struct {
-	ItemCode      string  `json:"ItemCode,omitempty"`
-	Quantity      float64 `json:"Quantity,omitempty"`
-	FromWarehouse string  `json:"FromWarehouse,omitempty"`
-	ToWarehouse   string  `json:"ToWarehouse,omitempty"`
+	ItemCode          string     `json:"ItemCode,omitempty"`
+	Quantity          float64    `json:"Quantity,omitempty"`
+	FromWarehouseCode string     `json:"FromWarehouseCode,omitempty"`
+	WarehouseCode     string     `json:"WarehouseCode,omitempty"`
+	BatchNumbers      []stBatch  `json:"BatchNumbers,omitempty"`
+	SerialNumbers     []stSerial `json:"SerialNumbers,omitempty"`
 }
 
 // stockTransferPayload is the exact JSON structure required by Service Layer.
@@ -91,12 +103,30 @@ func (b *StockTransferLineBuilder) Quantity(qty float64) *StockTransferLineBuild
 }
 
 func (b *StockTransferLineBuilder) FromWarehouse(whs string) *StockTransferLineBuilder {
-	b.line.FromWarehouse = whs
+	b.line.FromWarehouseCode = whs
 	return b
 }
 
 func (b *StockTransferLineBuilder) ToWarehouse(whs string) *StockTransferLineBuilder {
-	b.line.ToWarehouse = whs
+	b.line.WarehouseCode = whs
+	return b
+}
+
+// AddBatch adds a batch assignment to the current line.
+func (b *StockTransferLineBuilder) AddBatch(batchNumber string, qty float64) *StockTransferLineBuilder {
+	b.line.BatchNumbers = append(b.line.BatchNumbers, stBatch{
+		BatchNumber: batchNumber,
+		Quantity:    qty,
+	})
+	return b
+}
+
+// AddSerial adds a serial number assignment to the current line.
+func (b *StockTransferLineBuilder) AddSerial(serialNumber string) *StockTransferLineBuilder {
+	b.line.SerialNumbers = append(b.line.SerialNumbers, stSerial{
+		InternalSerialNumber: serialNumber,
+		Quantity:             1,
+	})
 	return b
 }
 
@@ -106,12 +136,17 @@ func (b *StockTransferLineBuilder) Add() *StockTransfer {
 	return b.st
 }
 
-// Add executes the POST request to create the Stock Transfer in SAP.
-func (st *StockTransfer) Add() (*Response, error) {
-	payload := stockTransferPayload{
+// Payload returns the structural representation of the document for logging or manual inspection.
+func (st *StockTransfer) Payload() any {
+	return stockTransferPayload{
 		StockTransferHeader: st.header,
 		StockTransferLines:  st.lines,
 	}
+}
+
+// Add executes the POST request to create the Stock Transfer in SAP.
+func (st *StockTransfer) Add() (*Response, error) {
+	payload := st.Payload()
 
 	var rawResp map[string]any
 	err := st.conn.Do("POST", "/StockTransfers", payload, &rawResp)

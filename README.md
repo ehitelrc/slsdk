@@ -64,8 +64,8 @@ func main() {
 	}
 	fmt.Printf("Success! Result: %+v\n", resp.Data)
 	
-	// 5. Query Builder Example
-	items, err := conn.Items().
+	// 5. Query Builder Example (OData)
+	items, err := slsdk.NewQuery(conn, "Items").
 		Select("ItemCode", "ItemName").
 		Filter("ItemsGroupCode eq 100").
 		Top(50).
@@ -74,9 +74,58 @@ func main() {
 	if err != nil {
 		log.Fatalf("Query Failed: %v", err)
 	}
-	fmt.Printf("Items Result: %+v\n", items)
+	fmt.Printf("Items Result: %+v\n", items.Data)
 }
 ```
+
+## Advanced Queries
+
+SLSDK abstracts several ways to read data beyond basic CRUD operations:
+
+### OData Query Builder
+The native `QueryBuilder` allows selecting, filtering, ordering, and paginating over standard endpoints. By default, Service Layer paginates results (e.g., returning 20 records at a time). 
+
+- Use `.Get()` to fetch a single page.
+- Use `.GetAll()` to automatically follow pagination links (`odata.nextLink`) and fetch all records into a single response array.
+
+```go
+// Fetch all matching records, handling pagination automatically
+resp, err := slsdk.NewQuery(conn, "BusinessPartners").
+    Select("CardCode", "CardName").
+    Filter("CardType eq 'cCustomer'").
+    OrderBy("CardCode desc").
+    GetAll() // Use Get() if you only want the first page
+```
+
+### SQL Views (Microsoft SQL Server)
+If you're using SAP B1 on SQL Server, you can expose and query custom SQL views.
+
+```go
+// 1. Initialize the SQL View object
+myView := slsdk.NewSQLView(conn, "B1_MyCustomView")
+
+// 2. Expose the view in Service Layer (only needed once)
+myView.Expose()
+
+// 3. Query the view like a regular entity
+resp, err := myView.Query().
+    Filter("TotalAmount gt 5000").
+    Get()
+
+// 4. (Optional) Unexpose when no longer needed
+myView.Unexpose()
+```
+
+### Cross Joins
+For complex queries without creating a view, you can use `CrossJoin` (via `QueryService_PostQuery`):
+
+```go
+resp, err := slsdk.NewCrossJoin(conn, "Orders", "Orders/DocumentLines").
+    Expand("Orders($select=DocEntry),Orders/DocumentLines($select=ItemCode)").
+    Filter("Orders/DocEntry eq 1").
+    Get()
+```
+
 
 ## Generic Objects (Unmapped Endpoints)
 
