@@ -131,18 +131,44 @@ if err != nil {
 SLSDK abstracts several ways to read data beyond basic CRUD operations:
 
 ### OData Query Builder
-The native `QueryBuilder` allows selecting, filtering, ordering, and paginating over standard endpoints. By default, Service Layer paginates results (e.g., returning 20 records at a time). 
 
-- Use `.Get()` to fetch a single page.
-- Use `.GetAll()` to automatically follow pagination links (`odata.nextLink`) and fetch all records into a single response array.
+The native `QueryBuilder` exposes a fluent interface to construct complex OData queries natively without dealing with raw string concatenation. It supports selecting, filtering, ordering, and paginating over any standard endpoint.
+
+#### Basic Query with Filters and Pagination
+```go
+// Fetch only specific columns for active customers, limited to 50 records
+resp, err := slsdk.NewQuery(conn, "BusinessPartners").
+	Select("CardCode", "CardName", "CurrentAccountBalance").
+	Filter("CardType eq 'cCustomer' and Valid eq 'tYES'").
+	OrderBy("CardCode desc").
+	Top(50).
+	Skip(10). // Skip the first 10 records
+	Get()
+
+if err != nil {
+	log.Fatalf("Query failed: %v", err)
+}
+```
+
+#### Fetching All Records (Automatic Pagination)
+By default, the Service Layer paginates large result sets (e.g., returning 20 records per page) using an `odata.nextLink`. Using `.GetAll()` automates the process of following these links to return all elements merged into a single array.
 
 ```go
-// Fetch all matching records, handling pagination automatically
-resp, err := slsdk.NewQuery(conn, "BusinessPartners").
+// Fetch ALL items from a specific group, SLSDK handles the multi-page HTTP requests internally
+resp, err := slsdk.NewQuery(conn, "Items").
+	Select("ItemCode", "ItemName").
+	Filter("ItemsGroupCode eq 100").
+	GetAll() 
+```
+
+#### Fetching a Single Record by Key
+If you know the exact primary key (e.g., `CardCode` or `DocEntry`), you can retrieve it directly:
+
+```go
+resp, err := slsdk.NewQuery(conn, "BusinessPartners('C20000')").
     Select("CardCode", "CardName").
-    Filter("CardType eq 'cCustomer'").
-    OrderBy("CardCode desc").
-    GetAll() // Use Get() if you only want the first page
+    Get()
+// resp.Data will contain the single JSON object, rather than a list of "value"
 ```
 
 ### SQL Views (Microsoft SQL Server)
